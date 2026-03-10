@@ -75,6 +75,52 @@ See [SETUP.md](SETUP.md) for instructions on setting up the conda environment.
 
 ## Training and Evaluation
 
+### Go VLA (4-DOF stone placement)
+
+Fine-tune OpenVLA-OFT on the Go VLA benchmark dataset (4-DOF: dx, dy, dz, gripper).
+
+**1. Authenticate with Weights & Biases:**
+
+```bash
+pip install wandb
+wandb login
+```
+
+This will prompt you for your API key. Get it from https://wandb.ai/authorize.
+Alternatively, set the environment variable:
+
+```bash
+export WANDB_API_KEY="your-api-key-here"
+```
+
+**2. Run fine-tuning:**
+
+```bash
+# Single GPU
+bash scripts/finetune_go_vla.sh
+
+# Multi-GPU (e.g., 4 GPUs)
+bash scripts/finetune_go_vla.sh 4
+```
+
+The script automatically downloads the RLDS dataset from Google Drive, unpacks it, and launches training. Logs are sent to the `m-w-jarosz-team-epoch/openvla-oft` wandb project.
+
+To disable wandb (e.g., for local debugging):
+
+```bash
+WANDB_MODE=disabled bash scripts/finetune_go_vla.sh
+```
+
+Checkpoints are saved to `runs/` every 5,000 steps. After training, merge LoRA weights:
+
+```bash
+python vla-scripts/merge_lora_weights_and_save.py \
+  --base_checkpoint openvla/openvla-7b \
+  --lora_finetuned_checkpoint_dir runs/<your_run>/
+```
+
+### LIBERO / ALOHA
+
 See [LIBERO.md](LIBERO.md) for fine-tuning/evaluating on LIBERO simulation benchmark task suites.
 
 See [ALOHA.md](ALOHA.md) for fine-tuning/evaluating on real-world ALOHA robot tasks.

@@ -846,6 +846,13 @@ def aloha_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     return trajectory
 
 
+def go_vla_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
+    """Go VLA 4-DOF dataset: action is already [dx, dy, dz, gripper], observation has image + state."""
+    # Action is already a flat (T, 4) tensor from the RLDS builder -- take only first 4 dims for safety
+    trajectory["action"] = trajectory["action"][:, :4]
+    return trajectory
+
+
 # === Registry ===
 OXE_STANDARDIZATION_TRANSFORMS = {
     "bridge_oxe": bridge_oxe_dataset_transform,
@@ -930,4 +937,6 @@ OXE_STANDARDIZATION_TRANSFORMS = {
     "aloha1_fold_shirt_30_demos": aloha_dataset_transform,
     "aloha1_scoop_X_into_bowl_45_demos": aloha_dataset_transform,
     "aloha1_put_X_into_pot_300_demos": aloha_dataset_transform,
+    ### Go VLA dataset
+    "go_vla_dataset": go_vla_dataset_transform,
 }

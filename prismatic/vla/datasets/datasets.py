@@ -223,7 +223,7 @@ class DummyDataset(Dataset):
         # per-dimension 1st and 99th action quantile. The values below correspond to "no normalization" for simplicity.
         self.dataset_statistics = {
             "dummy_dataset": {
-                "action": {"q01": np.zeros((7,), dtype=np.float32), "q99": np.ones((7,), dtype=np.float32)}
+                "action": {"q01": np.zeros((ACTION_DIM,), dtype=np.float32), "q99": np.ones((ACTION_DIM,), dtype=np.float32)}
             }
         }
 
@@ -234,7 +234,7 @@ class DummyDataset(Dataset):
     def __getitem__(self, idx):
         # TODO =>> Load image, action and instruction from disk -- we use dummy values
         image = Image.fromarray(np.asarray(np.random.rand(224, 224, 3) * 255.0, dtype=np.uint8))
-        action = np.asarray(np.random.rand(7), dtype=np.float32)
+        action = np.asarray(np.random.rand(ACTION_DIM), dtype=np.float32)
         instruction = "do something spectacular"
 
         # Add instruction to VLA prompt
