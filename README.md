@@ -8,70 +8,18 @@
 
 ## System Requirements
 
-Inference:
-* 1 GPU with ~16 GB VRAM for LIBERO sim benchmark tasks
-* 1 GPU with ~18 GB VRAM for ALOHA robot tasks
-
-Training:
-* Between 1-8 GPUs with 27-80 GB, depending on the desired training setup (with default bfloat16 data type). See [this FAQ on our project website](https://openvla-oft.github.io/#train-compute) for details.
-
-## Quick Start
-
-First, set up a conda environment (see instructions in [SETUP.md](SETUP.md)).
-
-Then, run the Python script below to download a pretrained OpenVLA-OFT checkpoint and run inference to generate an action chunk:
-
-```python
-import pickle
-from experiments.robot.libero.run_libero_eval import GenerateConfig
-from experiments.robot.openvla_utils import get_action_head, get_processor, get_proprio_projector, get_vla, get_vla_action
-from prismatic.vla.constants import NUM_ACTIONS_CHUNK, PROPRIO_DIM
-
-# Instantiate config (see class GenerateConfig in experiments/robot/libero/run_libero_eval.py for definitions)
-cfg = GenerateConfig(
-    pretrained_checkpoint = "moojink/openvla-7b-oft-finetuned-libero-spatial",
-    use_l1_regression = True,
-    use_diffusion = False,
-    use_film = False,
-    num_images_in_input = 2,
-    use_proprio = True,
-    load_in_8bit = False,
-    load_in_4bit = False,
-    center_crop = True,
-    num_open_loop_steps = NUM_ACTIONS_CHUNK,
-    unnorm_key = "libero_spatial_no_noops",
-)
-
-# Load OpenVLA-OFT policy and inputs processor
-vla = get_vla(cfg)
-processor = get_processor(cfg)
-
-# Load MLP action head to generate continuous actions (via L1 regression)
-action_head = get_action_head(cfg, llm_dim=vla.llm_dim)
-
-# Load proprio projector to map proprio to language embedding space
-proprio_projector = get_proprio_projector(cfg, llm_dim=vla.llm_dim, proprio_dim=PROPRIO_DIM)
-
-# Load sample observation:
-#   observation (dict): {
-#     "full_image": primary third-person image,
-#     "wrist_image": wrist-mounted camera image,
-#     "state": robot proprioceptive state,
-#     "task_description": task description,
-#   }
-with open("experiments/robot/libero/sample_libero_spatial_observation.pkl", "rb") as file:
-    observation = pickle.load(file)
-
-# Generate robot action chunk (sequence of future actions)
-actions = get_vla_action(cfg, vla, processor, observation, observation["task_description"], action_head, proprio_projector)
-print("Generated action chunk:")
-for act in actions:
-    print(act)
-```
+* NVIDIA GPU with Ada Lovelace architecture or newer (RTX 6000 Pro, RTX 4090, etc.)
+* 1 GPU with 48+ GB VRAM for training (RTX 6000 Pro recommended)
+* conda
 
 ## Installation
 
-See [SETUP.md](SETUP.md) for instructions on setting up the conda environment.
+```bash
+bash scripts/setup_env.sh
+conda activate openvla-oft
+```
+
+This creates a conda environment with Python 3.10, PyTorch 2.4 + CUDA 12.4, and all dependencies.
 
 ## Training and Evaluation
 
@@ -82,33 +30,43 @@ Fine-tune OpenVLA-OFT on the Go VLA benchmark dataset (4-DOF: dx, dy, dz, grippe
 **1. Authenticate with Weights & Biases:**
 
 ```bash
-pip install wandb
 wandb login
 ```
 
-This will prompt you for your API key. Get it from https://wandb.ai/authorize.
-Alternatively, set the environment variable:
+Get your API key from https://wandb.ai/authorize, or set:
 
 ```bash
 export WANDB_API_KEY="your-api-key-here"
 ```
 
-**2. Run fine-tuning:**
+**2. Build the RLDS dataset** (if not already built):
 
 ```bash
-# Single GPU
-bash scripts/finetune_go_vla.sh
-
-# Multi-GPU (e.g., 4 GPUs)
-bash scripts/finetune_go_vla.sh 4
+cd /path/to/rlds_builder/go_vla_dataset
+pip install apache-beam mlcroissant
+tfds build --data_dir /path/to/data_dir
 ```
 
-The script automatically downloads the RLDS dataset from Google Drive, unpacks it, and launches training. Logs are sent to the `m-w-jarosz-team-epoch/openvla-oft` wandb project.
+This creates a `go_vla_dataset/` directory inside `data_dir`.
+
+**3. Run fine-tuning:**
+
+```bash
+cd openvla-oft
+
+# Single GPU — DATA_DIR must contain a go_vla_dataset/ subdirectory (built RLDS)
+bash scripts/finetune_go_vla.sh <DATA_DIR>
+
+# Multi-GPU (e.g., 4 GPUs)
+bash scripts/finetune_go_vla.sh <DATA_DIR> 4
+```
+
+Logs are sent to the `m-w-jarosz-team-epoch/openvla-oft` wandb project.
 
 To disable wandb (e.g., for local debugging):
 
 ```bash
-WANDB_MODE=disabled bash scripts/finetune_go_vla.sh
+WANDB_MODE=disabled bash scripts/finetune_go_vla.sh <DATA_DIR>
 ```
 
 Checkpoints are saved to `runs/` every 5,000 steps. After training, merge LoRA weights:
@@ -124,10 +82,6 @@ python vla-scripts/merge_lora_weights_and_save.py \
 See [LIBERO.md](LIBERO.md) for fine-tuning/evaluating on LIBERO simulation benchmark task suites.
 
 See [ALOHA.md](ALOHA.md) for fine-tuning/evaluating on real-world ALOHA robot tasks.
-
-## Support
-
-If you run into any issues, please open a new GitHub issue. If you do not receive a response within 2 business days, please email Moo Jin Kim (moojink@cs.stanford.edu) to bring the issue to his attention.
 
 ## Citation
 
