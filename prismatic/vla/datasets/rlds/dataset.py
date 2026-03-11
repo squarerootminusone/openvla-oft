@@ -187,10 +187,11 @@ def make_dataset_from_rlds(
         }
 
         if absolute_action_mask is not None:
-            if len(absolute_action_mask) != traj["action"].shape[-1]:
+            action_dim = traj["action"].shape[-1]
+            if action_dim is not None and len(absolute_action_mask) != action_dim:
                 raise ValueError(
                     f"Length of absolute_action_mask ({len(absolute_action_mask)}) "
-                    f"does not match action dimension ({traj['action'].shape[-1]})."
+                    f"does not match action dimension ({action_dim})."
                 )
             traj["absolute_action_mask"] = tf.tile(
                 tf.convert_to_tensor(absolute_action_mask, dtype=tf.bool)[None],

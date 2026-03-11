@@ -847,9 +847,18 @@ def aloha_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def go_vla_dataset_transform(trajectory: Dict[str, Any]) -> Dict[str, Any]:
-    """Go VLA 4-DOF dataset: action is already [dx, dy, dz, gripper], observation has image + state."""
-    # Action is already a flat (T, 4) tensor from the RLDS builder -- take only first 4 dims for safety
-    trajectory["action"] = trajectory["action"][:, :4]
+    """Go VLA dataset: extract 4-DOF [dx, dy, dz, gripper] from action tensor.
+
+    Handles both v1.0.0 (7D: [dx,dy,dz, 0,0,0, gripper]) and
+    v2.0.0 (4D: [dx,dy,dz, gripper]) RLDS formats.
+    """
+    action = trajectory["action"]
+    if tf.shape(action)[-1] > 4:
+        # v1.0.0: 7D zero-padded — gripper is at index 6
+        trajectory["action"] = tf.concat([action[:, :3], action[:, 6:7]], axis=-1)
+    else:
+        # v2.0.0: already 4D
+        trajectory["action"] = action[:, :4]
     return trajectory
 
 

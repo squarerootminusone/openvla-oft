@@ -39,15 +39,15 @@ Get your API key from https://wandb.ai/authorize, or set:
 export WANDB_API_KEY="your-api-key-here"
 ```
 
-**2. Build the RLDS dataset** (if not already built):
+**2. Build the RLDS dataset** (v2.0.0, 4D actions [dx, dy, dz, gripper]):
 
 ```bash
-cd /path/to/rlds_builder/go_vla_dataset
-pip install apache-beam mlcroissant
-tfds build --data_dir /path/to/data_dir
+conda run -n mujogo python benchmarks/go_vla_benchmark/scripts/convert_to_rlds.py \
+    --input benchmarks/go_vla_benchmark/data/augmented_go.hdf5 \
+    --output-dir ~/tensorflow_datasets
 ```
 
-This creates a `go_vla_dataset/` directory inside `data_dir`.
+This creates a `go_vla_dataset/2.0.0/` directory inside `~/tensorflow_datasets`.
 
 **3. Run fine-tuning:**
 
