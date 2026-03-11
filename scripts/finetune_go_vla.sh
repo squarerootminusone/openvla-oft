@@ -59,10 +59,10 @@ if [ "$NUM_GPUS" -gt 1 ]; then
         --num_images_in_input 1 \
         --use_proprio False \
         --batch_size 16 \
-        --learning_rate 5e-4 \
-        --num_steps_before_decay 5000 \
-        --max_steps 10000 \
-        --save_freq 2500 \
+        --learning_rate 2e-4 \
+        --num_steps_before_decay 10000 \
+        --max_steps 20000 \
+        --save_freq 750 \
         --save_latest_checkpoint_only False \
         --image_aug True \
         --lora_rank 32 \
@@ -82,10 +82,10 @@ else
         --num_images_in_input 1 \
         --use_proprio False \
         --batch_size 16 \
-        --learning_rate 5e-4 \
-        --num_steps_before_decay 5000 \
-        --max_steps 10000 \
-        --save_freq 2500 \
+        --learning_rate 2e-4 \
+        --num_steps_before_decay 10000 \
+        --max_steps 20000 \
+        --save_freq 750 \
         --save_latest_checkpoint_only False \
         --image_aug True \
         --lora_rank 32 \
